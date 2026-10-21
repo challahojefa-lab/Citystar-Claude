@@ -98,6 +98,85 @@ export interface Translations {
       saveFailed: string;
       loadFailed: string;
       notFound: string;
+      stockQuantityInvalid: string;
+      stockQuantityWhole: string;
+    };
+    stock: {
+      enterButton: string;
+      changeButton: string;
+      /** Use {name} as the placeholder. */
+      buttonAria: string;
+      formTitle: string;
+      currentLabel: string;
+      /** Use {unit} as the placeholder. */
+      quantityLabel: string;
+      hint: string;
+      save: string;
+      saving: string;
+      cancel: string;
+      saved: string;
+    };
+  };
+  sales: {
+    title: string;
+    back: string;
+    newSale: string;
+    loading: string;
+    retry: string;
+    /** Use {total} as the placeholder. */
+    saved: string;
+    savedStockNote: string;
+    recentTitle: string;
+    noSales: string;
+    walkIn: string;
+    /** Use {count} as the placeholder. */
+    itemsCount: string;
+    form: {
+      title: string;
+      fixErrors: string;
+      itemsTitle: string;
+      noItems: string;
+      searchLabel: string;
+      searchPlaceholder: string;
+      /** Use {query} as the placeholder. */
+      noMatch: string;
+      noProductsAtAll: string;
+      moreResults: string;
+      /** Use {qty} and {unit} as placeholders. */
+      available: string;
+      outOfStock: string;
+      noPrice: string;
+      inSale: string;
+      quantityLabel: string;
+      /** Use {name} as the placeholder. */
+      quantityAria: string;
+      priceLabel: string;
+      lineTotal: string;
+      remove: string;
+      /** Use {name} as the placeholder. */
+      removeAria: string;
+      grandTotal: string;
+      customerTitle: string;
+      customerName: string;
+      customerPhone: string;
+      phoneHint: string;
+      save: string;
+      saving: string;
+      cancel: string;
+    };
+    errors: {
+      noItems: string;
+      quantityInvalid: string;
+      quantityWhole: string;
+      /** Use {available} and {unit} as placeholders. */
+      insufficientStock: string;
+      priceMissing: string;
+      productMissing: string;
+      phoneInvalid: string;
+      nameTooLong: string;
+      storageFull: string;
+      saveFailed: string;
+      loadFailed: string;
     };
   };
 }
@@ -210,6 +289,76 @@ export const translations: Record<Language, Translations> = {
         saveFailed: 'Could not save. Nothing was changed. Please try again.',
         loadFailed: 'Could not open the product list. Please try again.',
         notFound: 'This product was not found. It may have been removed.',
+        stockQuantityInvalid: 'Type a quantity of 0 or more, like 25 or 2.5.',
+        stockQuantityWhole: 'This item is counted in whole numbers only, like 1, 2 or 3.',
+      },
+      stock: {
+        enterButton: 'Enter Stock',
+        changeButton: 'Change Stock',
+        buttonAria: 'Stock of {name}',
+        formTitle: 'Stock Quantity',
+        currentLabel: 'Current stock',
+        quantityLabel: 'How many {unit} are in the shop now?',
+        hint: 'Type the quantity you counted. Type 0 if there is none.',
+        save: 'Save Stock',
+        saving: 'Saving...',
+        cancel: 'Cancel',
+        saved: 'Stock saved.',
+      },
+    },
+    sales: {
+      title: 'Sales',
+      back: 'Back',
+      newSale: 'New Sale',
+      loading: 'Loading...',
+      retry: 'Try again',
+      saved: 'Sale saved. Total: {total}',
+      savedStockNote: 'The stock was reduced.',
+      recentTitle: 'Recent sales',
+      noSales: 'No sales saved yet.',
+      walkIn: 'No customer name',
+      itemsCount: '{count} items',
+      form: {
+        title: 'New Sale',
+        fixErrors: 'Please fix the items marked in red.',
+        itemsTitle: 'Items in this sale',
+        noItems: 'No items added yet. Search a product below and tap it.',
+        searchLabel: 'Search product',
+        searchPlaceholder: 'Type product name',
+        noMatch: 'No product found for "{query}".',
+        noProductsAtAll: 'There are no products yet. Add products in Inventory first.',
+        moreResults: 'More products exist. Type more letters to find them.',
+        available: 'Stock: {qty} {unit}',
+        outOfStock: 'No stock - cannot sell',
+        noPrice: 'No selling price - set it in Inventory',
+        inSale: 'Already in this sale',
+        quantityLabel: 'Quantity',
+        quantityAria: 'Quantity of {name}',
+        priceLabel: 'Price',
+        lineTotal: 'Amount',
+        remove: 'Remove',
+        removeAria: 'Remove {name} from this sale',
+        grandTotal: 'Grand Total',
+        customerTitle: 'Customer (optional)',
+        customerName: 'Customer name',
+        customerPhone: 'Phone number',
+        phoneHint: 'Example: 9876543210',
+        save: 'Save Sale',
+        saving: 'Saving...',
+        cancel: 'Cancel',
+      },
+      errors: {
+        noItems: 'Add at least one product to the sale.',
+        quantityInvalid: 'Type a quantity above 0, like 2 or 1.5.',
+        quantityWhole: 'This item is sold in whole numbers only, like 1, 2 or 3.',
+        insufficientStock: 'Not enough stock. Only {available} {unit} available.',
+        priceMissing: 'This product has no selling price. Set it in Inventory.',
+        productMissing: 'This product was not found. Remove it from the sale.',
+        phoneInvalid: 'Type a 10-digit mobile number, or leave it empty.',
+        nameTooLong: 'The name is too long (maximum 60 letters).',
+        storageFull: 'The phone storage is full. Free some space and try again.',
+        saveFailed: 'Could not save the sale. Nothing was changed. Please try again.',
+        loadFailed: 'Could not open the products. Please try again.',
       },
     },
   },
@@ -320,6 +469,76 @@ export const translations: Record<Language, Translations> = {
         saveFailed: 'સાચવી શકાયું નથી. કંઈ બદલાયું નથી. ફરી પ્રયત્ન કરો.',
         loadFailed: 'માલની યાદી ખોલી શકાઈ નથી. ફરી પ્રયત્ન કરો.',
         notFound: 'આ માલ મળ્યો નથી. કદાચ તે કાઢી નંખાયો હશે.',
+        stockQuantityInvalid: 'જથ્થો 0 કે તેથી વધુ લખો, જેમ કે 25 અથવા 2.5.',
+        stockQuantityWhole: 'આ વસ્તુ આખી સંખ્યામાં જ ગણાય છે, જેમ કે 1, 2 અથવા 3.',
+      },
+      stock: {
+        enterButton: 'સ્ટોક લખો',
+        changeButton: 'સ્ટોક બદલો',
+        buttonAria: '{name} નો સ્ટોક',
+        formTitle: 'સ્ટોકનો જથ્થો',
+        currentLabel: 'હાલનો સ્ટોક',
+        quantityLabel: 'દુકાનમાં હાલ કેટલા {unit} છે?',
+        hint: 'ગણેલો જથ્થો લખો. કંઈ ન હોય તો 0 લખો.',
+        save: 'સ્ટોક સાચવો',
+        saving: 'સાચવી રહ્યા છીએ...',
+        cancel: 'રદ કરો',
+        saved: 'સ્ટોક સાચવ્યો.',
+      },
+    },
+    sales: {
+      title: 'વેચાણ',
+      back: 'પાછા જાઓ',
+      newSale: 'નવું વેચાણ',
+      loading: 'લોડ થઈ રહ્યું છે...',
+      retry: 'ફરી પ્રયત્ન કરો',
+      saved: 'વેચાણ સાચવ્યું. કુલ: {total}',
+      savedStockNote: 'સ્ટોક ઓછો થયો છે.',
+      recentTitle: 'તાજેતરનું વેચાણ',
+      noSales: 'હજુ કોઈ વેચાણ સાચવ્યું નથી.',
+      walkIn: 'ગ્રાહકનું નામ નથી',
+      itemsCount: '{count} વસ્તુ',
+      form: {
+        title: 'નવું વેચાણ',
+        fixErrors: 'કૃપા કરીને લાલ નિશાનવાળી બાબતો સુધારો.',
+        itemsTitle: 'આ વેચાણની વસ્તુઓ',
+        noItems: 'હજુ કોઈ વસ્તુ ઉમેરી નથી. નીચે માલ શોધો અને તેના પર દબાવો.',
+        searchLabel: 'માલ શોધો',
+        searchPlaceholder: 'માલનું નામ લખો',
+        noMatch: '"{query}" માટે કોઈ માલ મળ્યો નથી.',
+        noProductsAtAll: 'હજુ કોઈ માલ નથી. પહેલા સ્ટોકમાં માલ ઉમેરો.',
+        moreResults: 'બીજો માલ પણ છે. શોધવા માટે વધુ અક્ષર લખો.',
+        available: 'સ્ટોક: {qty} {unit}',
+        outOfStock: 'સ્ટોક નથી - વેચી શકાય નહીં',
+        noPrice: 'વેચાણ ભાવ નથી - સ્ટોકમાં ભાવ લખો',
+        inSale: 'આ વેચાણમાં ઉમેરેલો છે',
+        quantityLabel: 'જથ્થો',
+        quantityAria: '{name} નો જથ્થો',
+        priceLabel: 'ભાવ',
+        lineTotal: 'રકમ',
+        remove: 'કાઢી નાખો',
+        removeAria: '{name} ને વેચાણમાંથી કાઢી નાખો',
+        grandTotal: 'કુલ રકમ',
+        customerTitle: 'ગ્રાહક (ઇચ્છા મુજબ)',
+        customerName: 'ગ્રાહકનું નામ',
+        customerPhone: 'ફોન નંબર',
+        phoneHint: 'ઉદાહરણ: 9876543210',
+        save: 'વેચાણ સાચવો',
+        saving: 'સાચવી રહ્યા છીએ...',
+        cancel: 'રદ કરો',
+      },
+      errors: {
+        noItems: 'વેચાણમાં ઓછામાં ઓછો એક માલ ઉમેરો.',
+        quantityInvalid: 'જથ્થો 0 થી વધુ લખો, જેમ કે 2 અથવા 1.5.',
+        quantityWhole: 'આ વસ્તુ આખી સંખ્યામાં જ વેચાય છે, જેમ કે 1, 2 અથવા 3.',
+        insufficientStock: 'પૂરતો સ્ટોક નથી. ફક્ત {available} {unit} છે.',
+        priceMissing: 'આ માલનો વેચાણ ભાવ નથી. સ્ટોકમાં ભાવ લખો.',
+        productMissing: 'આ માલ મળ્યો નથી. તેને વેચાણમાંથી કાઢી નાખો.',
+        phoneInvalid: '10 અંકનો મોબાઈલ નંબર લખો, અથવા ખાલી રાખો.',
+        nameTooLong: 'નામ બહુ લાંબુ છે (વધુમાં વધુ 60 અક્ષર).',
+        storageFull: 'ફોનમાં જગ્યા ભરાઈ ગઈ છે. જગ્યા ખાલી કરીને ફરી પ્રયત્ન કરો.',
+        saveFailed: 'વેચાણ સાચવી શકાયું નથી. કંઈ બદલાયું નથી. ફરી પ્રયત્ન કરો.',
+        loadFailed: 'માલ ખોલી શકાયો નથી. ફરી પ્રયત્ન કરો.',
       },
     },
   },

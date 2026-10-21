@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Product, StockLevel, TestRecord } from './types';
+import type { Product, Sale, SaleItem, StockLevel, TestRecord } from './types';
 
 export const DB_NAME = 'citystar-hardware';
 
@@ -8,12 +8,14 @@ export const DB_NAME = 'citystar-hardware';
  * new `this.version(n).stores({...})` block (keep the old ones). Dexie then
  * upgrades existing devices automatically without losing data.
  */
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export class CitystarDatabase extends Dexie {
   testRecords!: EntityTable<TestRecord, 'id'>;
   products!: EntityTable<Product, 'id'>;
   stockLevels!: EntityTable<StockLevel, 'id'>;
+  sales!: EntityTable<Sale, 'id'>;
+  saleItems!: EntityTable<SaleItem, 'id'>;
 
   constructor(name: string = DB_NAME) {
     super(name);
@@ -28,6 +30,12 @@ export class CitystarDatabase extends Dexie {
     this.version(2).stores({
       products: 'id, name, category, syncStatus, updatedAt',
       stockLevels: 'id, &productId, syncStatus, updatedAt',
+    });
+
+    // v3: adds sales and saleItems. Products, stock and other data are untouched.
+    this.version(3).stores({
+      sales: 'id, createdAt, syncStatus, updatedAt',
+      saleItems: 'id, saleId, productId, syncStatus, updatedAt',
     });
   }
 }

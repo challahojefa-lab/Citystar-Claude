@@ -1,4 +1,5 @@
 import { ProductNotFoundError } from '../../db/productRepository';
+import { StockError } from '../../db/stockRepository';
 import type { InventoryErrorKey } from './productHelpers';
 
 /**
@@ -10,6 +11,9 @@ export function getErrorKey(
   fallback: 'saveFailed' | 'loadFailed',
 ): InventoryErrorKey {
   if (error instanceof ProductNotFoundError) return 'notFound';
+  if (error instanceof StockError) {
+    return error.code === 'notWholeNumber' ? 'stockQuantityWhole' : 'stockQuantityInvalid';
+  }
   if (error instanceof Error && error.name === 'QuotaExceededError') {
     return 'storageFull';
   }

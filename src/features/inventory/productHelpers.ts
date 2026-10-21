@@ -43,7 +43,7 @@ export function formValuesFromProduct(product: Product): ProductFormValues {
 }
 
 /** Gujarati keyboards can type ૦-૯; convert them to 0-9 before reading a number. */
-function toAsciiDigits(text: string): string {
+export function toAsciiDigits(text: string): string {
   return text.replace(/[૦-૯]/g, (digit) =>
     String(digit.charCodeAt(0) - 0x0ae6),
   );

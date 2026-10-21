@@ -4,6 +4,7 @@ import { PageHeader } from '../components/PageHeader';
 import { useLanguage } from '../i18n/LanguageContext';
 import { ProductCard } from '../features/inventory/ProductCard';
 import { ProductForm } from '../features/inventory/ProductForm';
+import { StockForm } from '../features/inventory/StockForm';
 import { filterProducts } from '../features/inventory/productHelpers';
 import { useProducts } from '../features/inventory/useProducts';
 
@@ -12,8 +13,14 @@ interface InventoryPageProps {
   onBack: () => void;
 }
 
-/** Either the product list, or the add/edit form (product = null means "add"). */
-type Mode = { kind: 'list' } | { kind: 'form'; product: Product | null };
+/**
+ * The product list, the add/edit form (product = null means "add"), or the
+ * stock quantity form for one product.
+ */
+type Mode =
+  | { kind: 'list' }
+  | { kind: 'form'; product: Product | null }
+  | { kind: 'stock'; product: Product };
 
 export function InventoryPage({ onBack }: InventoryPageProps) {
   const { t } = useLanguage();
@@ -22,7 +29,7 @@ export function InventoryPage({ onBack }: InventoryPageProps) {
 
   const [mode, setMode] = useState<Mode>({ kind: 'list' });
   const [query, setQuery] = useState('');
-  const [showSavedNotice, setShowSavedNotice] = useState(false);
+  const [notice, setNotice] = useState<'saved' | 'stockSaved' | null>(null);
 
   // Always start a new view at the top of the page.
   useEffect(() => {
@@ -31,10 +38,10 @@ export function InventoryPage({ onBack }: InventoryPageProps) {
 
   // The "Product saved" message disappears by itself.
   useEffect(() => {
-    if (!showSavedNotice) return;
-    const timer = window.setTimeout(() => setShowSavedNotice(false), 4000);
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 4000);
     return () => window.clearTimeout(timer);
-  }, [showSavedNotice]);
+  }, [notice]);
 
   const visibleProducts = useMemo(
     () => filterProducts(products, query),
@@ -43,11 +50,34 @@ export function InventoryPage({ onBack }: InventoryPageProps) {
 
   const closeForm = useCallback(() => setMode({ kind: 'list' }), []);
 
-  const handleSaved = useCallback(async () => {
-    await refresh();
-    setMode({ kind: 'list' });
-    setShowSavedNotice(true);
-  }, [refresh]);
+  const handleSaved = useCallback(
+    async (kind: 'saved' | 'stockSaved') => {
+      await refresh();
+      setMode({ kind: 'list' });
+      setNotice(kind);
+    },
+    [refresh],
+  );
+
+  if (mode.kind === 'stock') {
+    return (
+      <div className="page">
+        <PageHeader
+          title={text.stock.formTitle}
+          backLabel={text.back}
+          onBack={closeForm}
+        />
+        <main className="content">
+          <StockForm
+            product={mode.product}
+            currentQuantity={stock.get(mode.product.id)}
+            onSaved={() => void handleSaved('stockSaved')}
+            onCancel={closeForm}
+          />
+        </main>
+      </div>
+    );
+  }
 
   if (mode.kind === 'form') {
     return (
@@ -61,7 +91,7 @@ export function InventoryPage({ onBack }: InventoryPageProps) {
           <ProductForm
             product={mode.product}
             products={products}
-            onSaved={handleSaved}
+            onSaved={() => void handleSaved('saved')}
             onCancel={closeForm}
           />
         </main>
@@ -74,9 +104,9 @@ export function InventoryPage({ onBack }: InventoryPageProps) {
       <PageHeader title={text.title} backLabel={text.back} onBack={onBack} />
 
       <main className="content">
-        {showSavedNotice && (
+        {notice && (
           <p className="notice" role="status">
-            {text.saved}
+            {notice === 'stockSaved' ? text.stock.saved : text.saved}
           </p>
         )}
 
@@ -139,6 +169,7 @@ export function InventoryPage({ onBack }: InventoryPageProps) {
                         product={product}
                         stockQuantity={stock.get(product.id)}
                         onEdit={() => setMode({ kind: 'form', product })}
+                        onEditStock={() => setMode({ kind: 'stock', product })}
                       />
                     ))}
                   </div>

@@ -7,9 +7,10 @@ interface ProductCardProps {
   /** undefined = no stock has been recorded for this product. */
   stockQuantity: number | undefined;
   onEdit: () => void;
+  onEditStock: () => void;
 }
 
-export function ProductCard({ product, stockQuantity, onEdit }: ProductCardProps) {
+export function ProductCard({ product, stockQuantity, onEdit, onEditStock }: ProductCardProps) {
   const { t } = useLanguage();
   const card = t.inventory.card;
   const unitText = t.inventory.units[product.unit];
@@ -58,6 +59,21 @@ export function ProductCard({ product, stockQuantity, onEdit }: ProductCardProps
           </dd>
         </div>
       </dl>
+
+      <button
+        type="button"
+        className="secondary-button stock-button"
+        onClick={onEditStock}
+        aria-label={`${t.inventory.stock.buttonAria.replace('{name}', product.name)}: ${
+          stockQuantity === undefined
+            ? t.inventory.stock.enterButton
+            : t.inventory.stock.changeButton
+        }`}
+      >
+        {stockQuantity === undefined
+          ? t.inventory.stock.enterButton
+          : t.inventory.stock.changeButton}
+      </button>
     </article>
   );
 }

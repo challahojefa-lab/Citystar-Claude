@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Dashboard } from './pages/Dashboard';
 import { InventoryPage } from './pages/InventoryPage';
+import { SalesPage } from './pages/SalesPage';
 
-type View = 'dashboard' | 'inventory';
+type View = 'dashboard' | 'inventory' | 'sales';
 
 function viewFromHistory(): View {
-  return window.history.state?.view === 'inventory' ? 'inventory' : 'dashboard';
+  const view = window.history.state?.view;
+  return view === 'inventory' || view === 'sales' ? view : 'dashboard';
 }
 
 /**
@@ -22,13 +24,13 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const openInventory = useCallback(() => {
-    window.history.pushState({ view: 'inventory' }, '');
-    setView('inventory');
+  const open = useCallback((next: 'inventory' | 'sales') => {
+    window.history.pushState({ view: next }, '');
+    setView(next);
   }, []);
 
   const goToDashboard = useCallback(() => {
-    if (window.history.state?.view === 'inventory') {
+    if (window.history.state?.view) {
       window.history.back(); // triggers popstate, which updates the view
     } else {
       setView('dashboard');
@@ -38,5 +40,13 @@ export default function App() {
   if (view === 'inventory') {
     return <InventoryPage onBack={goToDashboard} />;
   }
-  return <Dashboard onOpenInventory={openInventory} />;
+  if (view === 'sales') {
+    return <SalesPage onBack={goToDashboard} />;
+  }
+  return (
+    <Dashboard
+      onOpenInventory={() => open('inventory')}
+      onOpenSales={() => open('sales')}
+    />
+  );
 }

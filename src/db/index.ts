@@ -8,6 +8,8 @@ export type {
   Product,
   ProductInput,
   ProductUnit,
+  Sale,
+  SaleItem,
   StockLevel,
   SyncStatus,
   TestRecord,
@@ -18,7 +20,8 @@ export {
   ProductNotFoundError,
   updateProduct,
 } from './productRepository';
-export { getStockQuantities } from './stockRepository';
+export { getStockQuantities, setStockQuantity, StockError } from './stockRepository';
+export type { StockErrorCode } from './stockRepository';
 export {
   createTestRecord,
   deleteTestRecord,
@@ -27,3 +30,5 @@ export {
   markTestRecordSynced,
   updateTestRecordLabel,
 } from './testRecordRepository';
+export { createSale, listRecentSales, listSaleItems, SaleError } from './saleRepository';
+export type { SaleErrorCode, SaleInput, SaleLineInput } from './saleRepository';

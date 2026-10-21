@@ -24,9 +24,10 @@ const MENU_ITEMS: ReadonlyArray<{ key: MenuKey; icon: IconName; accent: string }
 
 interface DashboardProps {
   onOpenInventory: () => void;
+  onOpenSales: () => void;
 }
 
-export function Dashboard({ onOpenInventory }: DashboardProps) {
+export function Dashboard({ onOpenInventory, onOpenSales }: DashboardProps) {
   const { t } = useLanguage();
   const [openSection, setOpenSection] = useState<string | null>(null);
   const closeDialog = useCallback(() => setOpenSection(null), []);
@@ -74,7 +75,8 @@ export function Dashboard({ onOpenInventory }: DashboardProps) {
           </h2>
           <div className="nav-grid">
             {MENU_ITEMS.map((item) => {
-              const isReady = item.key === 'inventory';
+              const isReady = item.key === 'inventory' || item.key === 'sales';
+              const openReady = item.key === 'sales' ? onOpenSales : onOpenInventory;
               return (
                 <NavCard
                   key={item.key}
@@ -85,7 +87,7 @@ export function Dashboard({ onOpenInventory }: DashboardProps) {
                   accent={item.accent}
                   onClick={() =>
                     isReady
-                      ? onOpenInventory()
+                      ? openReady()
                       : setOpenSection(t.menu[item.key].title)
                   }
                 />

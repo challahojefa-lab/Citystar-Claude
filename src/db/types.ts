@@ -43,6 +43,13 @@ export const PRODUCT_UNITS = [
 ] as const;
 export type ProductUnit = (typeof PRODUCT_UNITS)[number];
 
+/**
+ * Units that can only be counted in whole numbers. The stock-entry rules use
+ * this list. (features/sales/saleHelpers.ts keeps its own copy for the sale
+ * screen: if you change one list, change the other.)
+ */
+export const WHOLE_NUMBER_UNITS: readonly ProductUnit[] = ['piece', 'box', 'pair', 'set'];
+
 /** Product details only. Stock quantity is deliberately NOT stored here. */
 export interface Product extends BaseRecord {
   name: string;
@@ -62,10 +69,38 @@ export type ProductInput = Pick<
 
 /**
  * Current stock of one product, kept in its own table so product details and
- * stock balances stay separate. Nothing writes to this table yet: stock will
- * only change through Purchase/Sales/adjustment features built later.
+ * stock balances stay separate. Written by setStockQuantity (stock entry) and by
+ * a saved sale (which reduces it). A Purchase feature may add stock later.
  */
 export interface StockLevel extends BaseRecord {
   productId: string;
   quantity: number;
+}
+
+/**
+ * A completed sale. The sold time is `createdAt`. Sales are never edited after
+ * saving, so there is no update function for them.
+ */
+export interface Sale extends BaseRecord {
+  /** Empty string = customer name not entered. */
+  customerName: string;
+  /** Digits only (or with a leading +91); empty string = not entered. */
+  customerPhone: string;
+  itemCount: number;
+  /** Rupees, rounded to 2 decimals. */
+  totalAmount: number;
+}
+
+/**
+ * One line of a sale. The product name, unit and price are copied at the time
+ * of sale, so later edits to the product never change old sales.
+ */
+export interface SaleItem extends BaseRecord {
+  saleId: string;
+  productId: string;
+  productName: string;
+  unit: ProductUnit;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
 }
