@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { createSale, SaleError } from '../../db';
-import type { Product, Sale } from '../../db';
+import type { CustomerSummary, Product, Sale } from '../../db';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { formatQuantity, formatRupeesExact } from '../../utils/formatCurrency';
+import { filterCustomers } from '../customers/customerHelpers';
 import { filterProducts } from '../inventory/productHelpers';
 import {
   computeGrandTotal,
@@ -19,6 +20,8 @@ interface NewSaleFormProps {
   products: readonly Product[];
   /** productId -> quantity in stock. A missing product has no stock. */
   stock: ReadonlyMap<string, number>;
+  /** Saved customers (with balances) that this sale can be linked to. */
+  customers: readonly CustomerSummary[];
   onSaved: (sale: Sale) => void;
   onCancel: () => void;
   /** Called when the database says stock differs from what the screen showed. */
@@ -26,13 +29,14 @@ interface NewSaleFormProps {
 }
 
 type FormErrorKey = 'noItems' | 'phoneInvalid' | 'nameTooLong';
-type SaveErrorKey = 'storageFull' | 'saveFailed';
+type SaveErrorKey = 'storageFull' | 'saveFailed' | 'customerMissing';
 
 const MAX_RESULTS = 8;
 
 export function NewSaleForm({
   products,
   stock,
+  customers,
   onSaved,
   onCancel,
   onStockOutdated,
@@ -45,6 +49,9 @@ export function NewSaleForm({
   const [cart, setCart] = useState<CartLine[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
+  const [isCredit, setIsCredit] = useState(true);
+  const [customerQuery, setCustomerQuery] = useState('');
   const [lineErrors, setLineErrors] = useState<LineErrors>({});
   const [formErrors, setFormErrors] = useState<Partial<Record<FormErrorKey, true>>>({});
   const [saveError, setSaveError] = useState<SaveErrorKey | null>(null);
@@ -59,6 +66,11 @@ export function NewSaleForm({
   const grandTotal = useMemo(
     () => computeGrandTotal(cart, productById),
     [cart, productById],
+  );
+  const selectedCustomer = customers.find((item) => item.customer.id === selectedCustomerId);
+  const customerMatches = useMemo(
+    () => filterCustomers(customers, customerQuery).slice(0, 5),
+    [customers, customerQuery],
   );
   const inCart = useMemo(() => new Set(cart.map((line) => line.productId)), [cart]);
 
@@ -116,9 +128,11 @@ export function NewSaleForm({
 
     const nextFormErrors: Partial<Record<FormErrorKey, true>> = {};
     if (cart.length === 0) nextFormErrors.noItems = true;
-    const phone = normalizePhone(customerPhone);
+    // With a saved customer chosen, the typed name/phone boxes are hidden and unused.
+    const linked = selectedCustomer !== undefined;
+    const phone = linked ? ({ ok: true, value: '' } as const) : normalizePhone(customerPhone);
     if (!phone.ok) nextFormErrors.phoneInvalid = true;
-    const name = customerName.trim().replace(/\s+/g, ' ');
+    const name = linked ? '' : customerName.trim().replace(/\s+/g, ' ');
     if (name.length > MAX_CUSTOMER_NAME_LENGTH) nextFormErrors.nameTooLong = true;
 
     const cartCheck = validateCart(cart, productById, stock);
@@ -134,12 +148,18 @@ export function NewSaleForm({
       const sale = await createSale({
         customerName: name,
         customerPhone: phone.value,
+        customerId: selectedCustomer?.customer.id,
+        isCredit: selectedCustomer ? isCredit : undefined,
         lines: cartCheck.lines,
       });
       onSaved(sale);
     } catch (error) {
       console.error('Could not save sale', error);
       setSaving(false);
+      if (error instanceof SaleError && error.code === 'customerMissing') {
+        setSaveError('customerMissing');
+        return;
+      }
       if (error instanceof SaleError && error.productId) {
         // The database is the final judge: show its reason on the right row.
         const key =
@@ -342,48 +362,158 @@ export function NewSaleForm({
         <h2 className="section-title" id="sale-customer-heading">
           {text.form.customerTitle}
         </h2>
-        <div className="field-row">
-          <div className="field">
-            <label className="field-label" htmlFor="customer-name">
-              {text.form.customerName}
-            </label>
-            <input
-              id="customer-name"
-              className="text-input"
-              type="text"
-              autoComplete="off"
-              value={customerName}
-              aria-invalid={formErrors.nameTooLong ? true : undefined}
-              onChange={(event) => setCustomerName(event.target.value)}
-            />
-            {formErrors.nameTooLong && (
-              <p className="field-error" role="alert">
-                {text.errors.nameTooLong}
+
+        {selectedCustomer ? (
+          <>
+            <div className="customer-picked">
+              <p className="product-name">{selectedCustomer.customer.name}</p>
+              {selectedCustomer.customer.phone && (
+                <p className="product-meta">{selectedCustomer.customer.phone}</p>
+              )}
+              <p className="field-hint">
+                {text.form.balanceNow.replace(
+                  '{balance}',
+                  formatRupeesExact(selectedCustomer.outstanding),
+                )}
+              </p>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => setSelectedCustomerId(null)}
+              >
+                {text.form.change}
+              </button>
+            </div>
+
+            <div className="field">
+              <span className="field-label" id="pay-type-label">
+                {text.form.payTypeLabel}
+              </span>
+              <div className="chip-row" role="radiogroup" aria-labelledby="pay-type-label">
+                <button
+                  type="button"
+                  role="radio"
+                  className="chip"
+                  aria-checked={isCredit}
+                  onClick={() => setIsCredit(true)}
+                >
+                  {text.form.payCredit}
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  className="chip"
+                  aria-checked={!isCredit}
+                  onClick={() => setIsCredit(false)}
+                >
+                  {text.form.payCash}
+                </button>
+              </div>
+            </div>
+
+            {isCredit ? (
+              <p className="credit-note" role="status">
+                {text.form.creditNote
+                  .replace('{amount}', formatRupeesExact(grandTotal))
+                  .replace('{name}', selectedCustomer.customer.name)}
+              </p>
+            ) : (
+              <p className="cash-note" role="status">
+                {text.form.cashNote}
               </p>
             )}
-          </div>
-          <div className="field">
-            <label className="field-label" htmlFor="customer-phone">
-              {text.form.customerPhone}
-            </label>
-            <input
-              id="customer-phone"
-              className="text-input"
-              type="text"
-              inputMode="tel"
-              autoComplete="off"
-              value={customerPhone}
-              aria-invalid={formErrors.phoneInvalid ? true : undefined}
-              onChange={(event) => setCustomerPhone(event.target.value)}
-            />
-            <p className="field-hint">{text.form.phoneHint}</p>
-            {formErrors.phoneInvalid && (
-              <p className="field-error" role="alert">
-                {text.errors.phoneInvalid}
-              </p>
+          </>
+        ) : (
+          <>
+            {customers.length > 0 && (
+              <div className="field">
+                <label className="field-label" htmlFor="customer-pick">
+                  {text.form.pickLabel}
+                </label>
+                <input
+                  id="customer-pick"
+                  className="text-input"
+                  type="search"
+                  value={customerQuery}
+                  placeholder={text.form.pickPlaceholder}
+                  autoComplete="off"
+                  onChange={(event) => setCustomerQuery(event.target.value)}
+                />
+                {customerMatches.length === 0 ? (
+                  <p className="field-hint">
+                    {text.form.pickNone.replace('{query}', customerQuery.trim())}
+                  </p>
+                ) : (
+                  <ul className="pick-list">
+                    {customerMatches.map(({ customer, outstanding }) => (
+                      <li key={customer.id}>
+                        <button
+                          type="button"
+                          className="pick-button"
+                          onClick={() => {
+                            setSelectedCustomerId(customer.id);
+                            setIsCredit(true);
+                            setCustomerQuery('');
+                          }}
+                        >
+                          <span className="pick-name">{customer.name}</span>
+                          <span className="pick-meta">
+                            {customer.phone ? `${customer.phone} · ` : ''}
+                            {text.form.balanceNow.replace('{balance}', formatRupeesExact(outstanding))}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="field-hint">{text.form.orTypeName}</p>
+              </div>
             )}
-          </div>
-        </div>
+
+            <div className="field-row">
+              <div className="field">
+                <label className="field-label" htmlFor="customer-name">
+                  {text.form.customerName}
+                </label>
+                <input
+                  id="customer-name"
+                  className="text-input"
+                  type="text"
+                  autoComplete="off"
+                  value={customerName}
+                  aria-invalid={formErrors.nameTooLong ? true : undefined}
+                  onChange={(event) => setCustomerName(event.target.value)}
+                />
+                {formErrors.nameTooLong && (
+                  <p className="field-error" role="alert">
+                    {text.errors.nameTooLong}
+                  </p>
+                )}
+              </div>
+              <div className="field">
+                <label className="field-label" htmlFor="customer-phone">
+                  {text.form.customerPhone}
+                </label>
+                <input
+                  id="customer-phone"
+                  className="text-input"
+                  type="text"
+                  inputMode="tel"
+                  autoComplete="off"
+                  value={customerPhone}
+                  aria-invalid={formErrors.phoneInvalid ? true : undefined}
+                  onChange={(event) => setCustomerPhone(event.target.value)}
+                />
+                <p className="field-hint">{text.form.phoneHint}</p>
+                {formErrors.phoneInvalid && (
+                  <p className="field-error" role="alert">
+                    {text.errors.phoneInvalid}
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       <div className="form-actions">

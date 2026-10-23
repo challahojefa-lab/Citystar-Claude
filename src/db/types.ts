@@ -70,7 +70,7 @@ export type ProductInput = Pick<
 /**
  * Current stock of one product, kept in its own table so product details and
  * stock balances stay separate. Written by setStockQuantity (stock entry) and by
- * a saved sale (which reduces it). A Purchase feature may add stock later.
+ * a saved sale (which reduces it) and a saved purchase (which increases it).
  */
 export interface StockLevel extends BaseRecord {
   productId: string;
@@ -89,6 +89,14 @@ export interface Sale extends BaseRecord {
   itemCount: number;
   /** Rupees, rounded to 2 decimals. */
   totalAmount: number;
+  /**
+   * Set only when the sale was made to a saved customer. Sales saved before
+   * customers existed (or with no customer chosen) have neither field and never
+   * count toward any customer's balance.
+   */
+  customerId?: string;
+  /** With customerId: true = added to the customer's balance, false = paid in cash. */
+  isCredit?: boolean;
 }
 
 /**
@@ -103,4 +111,54 @@ export interface SaleItem extends BaseRecord {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+}
+
+/**
+ * A completed purchase (goods bought from a supplier). The time is `createdAt`.
+ * Purchases are never edited after saving. The supplier is only free text here;
+ * there are no supplier records.
+ */
+export interface Purchase extends BaseRecord {
+  /** Empty string = supplier name not entered. */
+  supplierName: string;
+  /** 10 digits; empty string = not entered. */
+  supplierPhone: string;
+  itemCount: number;
+  /** Rupees, rounded to 2 decimals. */
+  totalAmount: number;
+}
+
+/**
+ * One line of a purchase. The product name, unit and price are copied at the
+ * time of purchase, so later product edits never change old purchases.
+ */
+export interface PurchaseItem extends BaseRecord {
+  purchaseId: string;
+  productId: string;
+  productName: string;
+  unit: ProductUnit;
+  quantity: number;
+  /** Price paid per unit in this purchase (may differ from the product's usual price). */
+  unitPrice: number;
+  lineTotal: number;
+}
+
+/** A saved customer. Name is required; phone (10 digits) and notes may be empty. */
+export interface Customer extends BaseRecord {
+  name: string;
+  phone: string;
+  notes: string;
+}
+
+/**
+ * Money received from a customer against their balance. `paidOn` is the date the
+ * money was received (YYYY-MM-DD, chosen by the shopkeeper); `createdAt` is when
+ * it was recorded. Payments are never edited or deleted after saving.
+ */
+export interface Payment extends BaseRecord {
+  customerId: string;
+  /** Rupees, more than 0, at most 2 decimals. */
+  amount: number;
+  paidOn: string;
+  notes: string;
 }

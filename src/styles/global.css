@@ -127,19 +127,6 @@ p {
 
 /* ---------- Summary ---------- */
 
-.demo-banner {
-  display: inline-block;
-  margin-bottom: 14px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: #fff4d6;
-  border: 2px dashed var(--amber);
-  color: #7a5300;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
 .summary-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -837,4 +824,212 @@ p {
 
 .stock-button {
   width: 100%;
+}
+
+/* ---------- Purchase ---------- */
+
+.purchase-fields .value-box {
+  grid-column: 1 / -1;
+}
+
+.purchase-row {
+  border-left-color: #d97706;
+}
+
+@media (min-width: 640px) {
+  .purchase-fields {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .purchase-fields .value-box {
+    grid-column: auto;
+  }
+}
+
+/* ---------- Customers and credit ---------- */
+
+.customer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+  padding: 16px;
+  border: 2px solid var(--border);
+  border-left: 8px solid #7c3aed;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.customer-card:active {
+  background: #f5f0ff;
+}
+
+.value-box.due {
+  background: #fdecea;
+}
+
+.value-box.due dd {
+  color: #b3261e;
+}
+
+.due-line {
+  margin-top: 4px;
+  font-size: 1.3rem;
+}
+
+.due-line strong {
+  color: #b3261e;
+}
+
+.credit-tag {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #fff4d6;
+  border: 2px solid var(--amber);
+  color: #7a5300;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.credit-row {
+  border-left-color: var(--amber);
+}
+
+.credit-amount {
+  color: #b3261e;
+}
+
+.customer-picked {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 2px solid #7c3aed;
+  border-radius: var(--radius);
+  background: #f5f0ff;
+}
+
+.credit-note {
+  padding: 12px 14px;
+  border: 2px solid var(--amber);
+  border-radius: 14px;
+  background: #fff4d6;
+  color: #5c3f00;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.cash-note {
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  background: #f1f4f8;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* ---------- Reports ---------- */
+
+.report-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px;
+  background: var(--surface);
+  border-radius: var(--radius);
+  border-left: 8px solid var(--accent);
+  box-shadow: var(--shadow);
+}
+
+.report-value {
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.report-card .report-value {
+  color: var(--accent);
+}
+
+.report-sub {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.profit-value {
+  color: #14532d;
+}
+
+.due-value {
+  color: #b3261e;
+}
+
+.warn-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 3px solid var(--amber);
+  border-radius: 14px;
+  background: #fff4d6;
+  color: #5c3f00;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.warn-title {
+  font-size: 1.3rem;
+  color: #7a3b00;
+}
+
+.about-list {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 1.05rem;
+}
+
+@media (min-width: 640px) {
+  .report-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---------- Backup ---------- */
+
+.backup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.backup-text,
+.backup-last {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.backup-share {
+  width: 100%;
+}
+
+.backup-file {
+  word-break: break-all;
+  font-size: 1rem;
 }

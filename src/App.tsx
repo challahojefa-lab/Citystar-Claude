@@ -1,13 +1,22 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Dashboard } from './pages/Dashboard';
+import { CustomersPage } from './pages/CustomersPage';
 import { InventoryPage } from './pages/InventoryPage';
+import { ReportsPage } from './pages/ReportsPage';
+import { PurchasePage } from './pages/PurchasePage';
 import { SalesPage } from './pages/SalesPage';
 
-type View = 'dashboard' | 'inventory' | 'sales';
+type View = 'dashboard' | 'inventory' | 'sales' | 'purchase' | 'customers' | 'reports';
 
 function viewFromHistory(): View {
   const view = window.history.state?.view;
-  return view === 'inventory' || view === 'sales' ? view : 'dashboard';
+  return view === 'inventory' ||
+    view === 'sales' ||
+    view === 'purchase' ||
+    view === 'customers' ||
+    view === 'reports'
+    ? view
+    : 'dashboard';
 }
 
 /**
@@ -24,7 +33,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  const open = useCallback((next: 'inventory' | 'sales') => {
+  const open = useCallback((next: 'inventory' | 'sales' | 'purchase' | 'customers' | 'reports') => {
     window.history.pushState({ view: next }, '');
     setView(next);
   }, []);
@@ -43,10 +52,22 @@ export default function App() {
   if (view === 'sales') {
     return <SalesPage onBack={goToDashboard} />;
   }
+  if (view === 'purchase') {
+    return <PurchasePage onBack={goToDashboard} />;
+  }
+  if (view === 'customers') {
+    return <CustomersPage onBack={goToDashboard} />;
+  }
+  if (view === 'reports') {
+    return <ReportsPage onBack={goToDashboard} />;
+  }
   return (
     <Dashboard
       onOpenInventory={() => open('inventory')}
       onOpenSales={() => open('sales')}
+      onOpenPurchase={() => open('purchase')}
+      onOpenCustomers={() => open('customers')}
+      onOpenReports={() => open('reports')}
     />
   );
 }

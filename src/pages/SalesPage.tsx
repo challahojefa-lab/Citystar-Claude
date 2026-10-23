@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { PageHeader } from '../components/PageHeader';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useCustomers } from '../features/customers/useCustomers';
 import { useProducts } from '../features/inventory/useProducts';
 import { NewSaleForm } from '../features/sales/NewSaleForm';
 import { useRecentSales } from '../features/sales/useRecentSales';
@@ -16,9 +17,10 @@ export function SalesPage({ onBack }: SalesPageProps) {
   const text = t.sales;
   const { products, stock, status, reload, refresh } = useProducts();
   const { sales, refresh: refreshSales } = useRecentSales();
+  const { summaries: customers, refresh: refreshCustomers } = useCustomers();
 
   const [creating, setCreating] = useState(false);
-  const [savedTotal, setSavedTotal] = useState<number | null>(null);
+  const [saved, setSaved] = useState<{ total: number; creditTo: string | null } | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -27,13 +29,13 @@ export function SalesPage({ onBack }: SalesPageProps) {
   const closeForm = useCallback(() => setCreating(false), []);
 
   const handleSaved = useCallback(
-    async (sale: { totalAmount: number }) => {
-      // Reload stock and the recent list so the next sale sees the new balances.
-      await Promise.all([refresh(), refreshSales()]);
-      setSavedTotal(sale.totalAmount);
+    async (sale: { totalAmount: number; customerName: string; isCredit?: boolean }) => {
+      // Reload stock, the recent list and customer balances for the next sale.
+      await Promise.all([refresh(), refreshSales(), refreshCustomers()]);
+      setSaved({ total: sale.totalAmount, creditTo: sale.isCredit ? sale.customerName : null });
       setCreating(false);
     },
-    [refresh, refreshSales],
+    [refresh, refreshSales, refreshCustomers],
   );
 
   const formatTime = (iso: string) =>
@@ -50,6 +52,7 @@ export function SalesPage({ onBack }: SalesPageProps) {
           <NewSaleForm
             products={products}
             stock={stock}
+            customers={customers}
             onSaved={handleSaved}
             onCancel={closeForm}
             onStockOutdated={() => void refresh()}
@@ -64,9 +67,15 @@ export function SalesPage({ onBack }: SalesPageProps) {
       <PageHeader title={text.title} backLabel={text.back} onBack={onBack} />
 
       <main className="content">
-        {savedTotal !== null && (
+        {saved !== null && (
           <div className="notice" role="status">
-            <p>{text.saved.replace('{total}', formatRupeesExact(savedTotal))}</p>
+            <p>
+              {saved.creditTo !== null
+                ? text.savedCredit
+                    .replace('{total}', formatRupeesExact(saved.total))
+                    .replace('{name}', saved.creditTo)
+                : text.saved.replace('{total}', formatRupeesExact(saved.total))}
+            </p>
             <p>{text.savedStockNote}</p>
           </div>
         )}
@@ -88,7 +97,7 @@ export function SalesPage({ onBack }: SalesPageProps) {
               type="button"
               className="primary-button add-button"
               onClick={() => {
-                setSavedTotal(null);
+                setSaved(null);
                 setCreating(true);
               }}
             >
@@ -104,10 +113,14 @@ export function SalesPage({ onBack }: SalesPageProps) {
               ) : (
                 <ul className="sale-list">
                   {sales.map((sale) => (
-                    <li className="sale-row" key={sale.id}>
+                    <li
+                      className={`sale-row ${sale.isCredit ? 'credit-row' : ''}`}
+                      key={sale.id}
+                    >
                       <div>
                         <p className="sale-customer">
-                          {sale.customerName || text.walkIn}
+                          {sale.customerName || text.walkIn}{' '}
+                          {sale.isCredit && <span className="credit-tag">{text.creditBadge}</span>}
                         </p>
                         <p className="field-hint">
                           {formatTime(sale.createdAt)} ·{' '}

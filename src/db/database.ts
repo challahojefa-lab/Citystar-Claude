@@ -1,5 +1,15 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Product, Sale, SaleItem, StockLevel, TestRecord } from './types';
+import type {
+  Customer,
+  Payment,
+  Product,
+  Purchase,
+  PurchaseItem,
+  Sale,
+  SaleItem,
+  StockLevel,
+  TestRecord,
+} from './types';
 
 export const DB_NAME = 'citystar-hardware';
 
@@ -8,7 +18,7 @@ export const DB_NAME = 'citystar-hardware';
  * new `this.version(n).stores({...})` block (keep the old ones). Dexie then
  * upgrades existing devices automatically without losing data.
  */
-export const DB_VERSION = 3;
+export const DB_VERSION = 5;
 
 export class CitystarDatabase extends Dexie {
   testRecords!: EntityTable<TestRecord, 'id'>;
@@ -16,6 +26,10 @@ export class CitystarDatabase extends Dexie {
   stockLevels!: EntityTable<StockLevel, 'id'>;
   sales!: EntityTable<Sale, 'id'>;
   saleItems!: EntityTable<SaleItem, 'id'>;
+  purchases!: EntityTable<Purchase, 'id'>;
+  purchaseItems!: EntityTable<PurchaseItem, 'id'>;
+  customers!: EntityTable<Customer, 'id'>;
+  payments!: EntityTable<Payment, 'id'>;
 
   constructor(name: string = DB_NAME) {
     super(name);
@@ -36,6 +50,20 @@ export class CitystarDatabase extends Dexie {
     this.version(3).stores({
       sales: 'id, createdAt, syncStatus, updatedAt',
       saleItems: 'id, saleId, productId, syncStatus, updatedAt',
+    });
+
+    // v4: adds purchases and purchaseItems. Products, stock and sales are untouched.
+    this.version(4).stores({
+      purchases: 'id, createdAt, syncStatus, updatedAt',
+      purchaseItems: 'id, purchaseId, productId, syncStatus, updatedAt',
+    });
+
+    // v5: adds customers and payments, and an index on sales.customerId (used to
+    // add up a customer's credit sales). Existing sales rows are not rewritten.
+    this.version(5).stores({
+      sales: 'id, createdAt, customerId, syncStatus, updatedAt',
+      customers: 'id, name, syncStatus, updatedAt',
+      payments: 'id, customerId, paidOn, syncStatus, updatedAt',
     });
   }
 }

@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
-import { demoSummary } from '../data/demoData';
+import { useDashboardSummary } from '../features/dashboard/useDashboardSummary';
+import type { CardValue } from '../features/dashboard/useDashboardSummary';
 import { useLanguage } from '../i18n/LanguageContext';
 import type { Translations } from '../i18n/translations';
-import { formatRupees } from '../utils/formatCurrency';
+import { formatQuantity, formatRupeesExact } from '../utils/formatCurrency';
 import type { IconName } from '../components/Icons';
 import { LanguageSelector } from '../components/LanguageSelector';
+import { BackupCard } from '../features/backup/BackupCard';
 import { NavCard } from '../components/NavCard';
 import { NotReadyDialog } from '../components/NotReadyDialog';
 import { SummaryCard } from '../components/SummaryCard';
@@ -25,11 +27,23 @@ const MENU_ITEMS: ReadonlyArray<{ key: MenuKey; icon: IconName; accent: string }
 interface DashboardProps {
   onOpenInventory: () => void;
   onOpenSales: () => void;
+  onOpenPurchase: () => void;
+  onOpenCustomers: () => void;
+  onOpenReports: () => void;
 }
 
-export function Dashboard({ onOpenInventory, onOpenSales }: DashboardProps) {
+export function Dashboard({
+  onOpenInventory,
+  onOpenSales,
+  onOpenPurchase,
+  onOpenCustomers,
+  onOpenReports,
+}: DashboardProps) {
   const { t } = useLanguage();
   const [openSection, setOpenSection] = useState<string | null>(null);
+  const summary = useDashboardSummary();
+  const show = (v: CardValue, format: (n: number) => string): string =>
+    v.state === 'ready' ? format(v.value) : v.state === 'loading' ? t.summary.loading : t.summary.unavailable;
   const closeDialog = useCallback(() => setOpenSection(null), []);
 
   return (
@@ -49,21 +63,25 @@ export function Dashboard({ onOpenInventory, onOpenSales }: DashboardProps) {
           <h2 id="summary-heading" className="section-title">
             {t.summary.title}
           </h2>
-          <p className="demo-banner">{t.summary.demoNotice}</p>
           <div className="summary-grid">
             <SummaryCard
               label={t.summary.todaySales}
-              value={formatRupees(demoSummary.todaySales)}
+              value={show(summary.todaySales, formatRupeesExact)}
               accent="#1e8e3e"
             />
             <SummaryCard
-              label={t.summary.toReceive}
-              value={formatRupees(demoSummary.toReceive)}
+              label={t.summary.todayPurchases}
+              value={show(summary.todayPurchases, formatRupeesExact)}
+              accent="#d97706"
+            />
+            <SummaryCard
+              label={t.summary.products}
+              value={show(summary.products, formatQuantity)}
               accent="#0f4c81"
             />
             <SummaryCard
-              label={t.summary.toPay}
-              value={formatRupees(demoSummary.toPay)}
+              label={t.summary.toReceive}
+              value={show(summary.toReceive, formatRupeesExact)}
               accent="#c2410c"
             />
           </div>
@@ -75,8 +93,15 @@ export function Dashboard({ onOpenInventory, onOpenSales }: DashboardProps) {
           </h2>
           <div className="nav-grid">
             {MENU_ITEMS.map((item) => {
-              const isReady = item.key === 'inventory' || item.key === 'sales';
-              const openReady = item.key === 'sales' ? onOpenSales : onOpenInventory;
+              const readyActions: Partial<Record<MenuKey, () => void>> = {
+                inventory: onOpenInventory,
+                sales: onOpenSales,
+                purchase: onOpenPurchase,
+                customers: onOpenCustomers,
+                reports: onOpenReports,
+              };
+              const openReady = readyActions[item.key];
+              const isReady = openReady !== undefined;
               return (
                 <NavCard
                   key={item.key}
@@ -86,7 +111,7 @@ export function Dashboard({ onOpenInventory, onOpenSales }: DashboardProps) {
                   badge={isReady ? undefined : t.notReady.badge}
                   accent={item.accent}
                   onClick={() =>
-                    isReady
+                    openReady
                       ? openReady()
                       : setOpenSection(t.menu[item.key].title)
                   }
@@ -95,6 +120,8 @@ export function Dashboard({ onOpenInventory, onOpenSales }: DashboardProps) {
             })}
           </div>
         </section>
+
+        <BackupCard />
       </main>
 
       <NotReadyDialog sectionName={openSection} onClose={closeDialog} />

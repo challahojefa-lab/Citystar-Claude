@@ -1,13 +1,14 @@
 import { db } from './database';
 import { newId, nowIso } from './ids';
-import type { Sale, SaleItem } from './types';
+import type { Customer, Sale, SaleItem } from './types';
 
 export type SaleErrorCode =
   | 'noItems'
   | 'invalidQuantity'
   | 'productMissing'
   | 'priceMissing'
-  | 'insufficientStock';
+  | 'insufficientStock'
+  | 'customerMissing';
 
 /** Thrown when a sale cannot be saved. Nothing is changed when this happens. */
 export class SaleError extends Error {
@@ -33,6 +34,14 @@ export interface SaleLineInput {
 export interface SaleInput {
   customerName: string;
   customerPhone: string;
+  /**
+   * Optional saved customer. When given, the customer's name and phone are copied
+   * onto the sale and the sale is a credit sale (added to their balance) unless
+   * isCredit is false. Without a customer, isCredit is ignored: a sale with no
+   * customer never counts toward anyone's balance.
+   */
+  customerId?: string;
+  isCredit?: boolean;
   lines: readonly SaleLineInput[];
 }
 
@@ -55,9 +64,15 @@ export function roundQuantity(value: number): number {
 export function createSale(input: SaleInput): Promise<Sale> {
   return db.transaction(
     'rw',
-    [db.sales, db.saleItems, db.stockLevels, db.products],
+    [db.sales, db.saleItems, db.stockLevels, db.products, db.customers],
     async () => {
       if (input.lines.length === 0) throw new SaleError('noItems');
+
+      let customer: Customer | undefined;
+      if (input.customerId !== undefined) {
+        customer = await db.customers.get(input.customerId);
+        if (!customer) throw new SaleError('customerMissing');
+      }
 
       // Merge accidental duplicates of the same product into one line.
       const wanted = new Map<string, number>();
@@ -103,8 +118,9 @@ export function createSale(input: SaleInput): Promise<Sale> {
 
       const sale: Sale = {
         id: saleId,
-        customerName: input.customerName.trim(),
-        customerPhone: input.customerPhone.trim(),
+        customerName: customer ? customer.name : input.customerName.trim(),
+        customerPhone: customer ? customer.phone : input.customerPhone.trim(),
+        ...(customer ? { customerId: customer.id, isCredit: input.isCredit ?? true } : {}),
         itemCount: items.length,
         totalAmount: roundMoney(items.reduce((sum, item) => sum + item.lineTotal, 0)),
         createdAt: now,
